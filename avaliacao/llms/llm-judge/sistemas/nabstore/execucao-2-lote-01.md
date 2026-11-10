@@ -1,0 +1,224 @@
+# SYSTEM
+
+Você é um especialista em arquitetura de micro frontends. Vai receber a arquitetura de um sistema (os artefatos descritos abaixo) e uma planilha (CSV) com as suspeitas de anti-padrão nele, uma por linha. Para cada linha, diga se concorda que é de fato uma ocorrência do anti-padrão, segundo a definição abaixo.
+
+Regras:
+- Julgue pela **definição**, não por regra numérica. Não existe limiar oficial.
+- Use só os fatos fornecidos. Se eles não bastam para decidir, responda `Não sei`.
+- Uma ocorrência é um **problema de arquitetura**, com as consequências que a definição descreve, não só a presença do padrão.
+- Julgue cada linha sozinha: uma não influencia a outra.
+- Responda só com o CSV pedido.
+
+### Definições
+
+Do catálogo "A Catalog of Micro Frontends Anti-patterns" (ICSE 2025, doi:10.1109/ICSE55347.2025.00079; mfe-anti-patterns.online), literalmente.
+
+**Cyclic Dependency**
+- *Problem:* Two or more MFEs directly or indirectly depend on each other.
+- *Symptoms and consequences:* High coupling between screens and fragments, compromising MFEs' independence and modularity. Thus, changes in one MFE require coordination with the others. Circular dependencies lead to challenges in a system's maintenance and evolution, compromising agility and the ability to scale developments efficiently.
+
+**Hub-like Dependency** (also known as: Tight coupling)
+- *Problem:* A screen of a MFE integrates fragments from several other MFEs, becoming a central point of interdependence.
+- *Symptoms and consequences:* Any issue occurring in the main screen or one of its fragments can affect all other fragments present on it.
+
+**Hammering APIs** (also known as: Let's hammer the APIs)
+- *Problem:* Multiple micro frontends independently call the same API endpoint.
+- *Symptoms and consequences:* Duplicated requests, unnecessary load on backend services, and scalability issues.
+
+**Global State Communication** (also known as: Relax, It's just code; Sharing state across Micro Frontends; Global State; Shared Global State)
+- *Problem:* Using shared states violates the principle of segregation, compromising the independence of each micro frontend and increasing coupling.
+- *Symptoms and consequences:* Changes in the shared state need coordination with every MFE, otherwise you may introduce bugs in the ones reading the state, which decreases independence.
+
+**One Micro Frontend for All**
+- *Problem:* A single micro frontend is created and imported by all other MFEs.
+- *Symptoms and consequences:* Misuse of local storage, pub/sub mechanisms, and web socket mechanisms to implement communication between the MFE for all and others. Having a single point of failure that can break the entire application.
+
+**Mega Frontend**
+- *Problem:* A single micro frontend takes on multiple responsibilities or concerns that should be separated.
+- *Symptoms and consequences:* This often happens when an MFE includes several screens or unrelated fragments, resulting in a bloated unit.
+
+**Nano Frontend** (also known as: Yin and Yang; Micro Frontends vs Components)
+- *Problem:* A micro frontend is created with only a few screens or fragments.
+- *Symptoms and consequences:* This typically occurs when teams confuse micro frontends with UI components, resulting in fragmented and ineffective architectural decomposition.
+
+### Artefatos
+
+Você recebe a arquitetura do sistema reconstruída por análise estática do código, em JSON. Cada arquivo é uma lista; os campos `at`, `imported_at`, `produced_at` e `consumed_at` dizem onde no código o fato foi encontrado (`file`, `line` e o trecho em `code`).
+
+| arquivo | um registro é… | campos principais |
+|---|---|---|
+| `microfrontends.json` | um micro frontend | `id`; `role` (`shell` = o orquestrador que monta os outros, `microfrontend` = os demais); `mounts` (quem o shell monta); `routes` (URL base em que é montado); `screens` (telas: `component`, `route`, `reachable` = se está ligada ao app); `fragments` (componentes que expõe para outros montarem); `size` (`files`, `lines`, `code_lines`) |
+| `compositions.json` | um MFE montando o fragmento de outro | `consumer` monta o `fragment` de `provider`; `renders` = onde é renderizado e em quais `screens` |
+| `navigations.json` | um MFE levando o usuário para outro | `source` → `target`, pela URL `resolved_url`; `on` = de quais telas parte |
+| `communications.json` | uma mensagem entre MFEs | `source` publica, `target` recebe, pelo `channel`, com o `mechanism` (`CustomEvent`, `customProps`…); `produced_on`/`consumed_on` = em quais telas |
+| `api_calls.json` | uma chamada a uma API de backend | `microfrontend` chama `method` + `path` (`{param}` = trecho variável), com o `client` (fetch, axios…); `screens`/`fragments` = de onde |
+| `state_accesses.json` | um acesso a estado global | `microfrontend` faz `access` (`read` ou `write`) na chave `path` da `library` (`localStorage`, `sessionStorage`, `redux`…) |
+
+Os artefatos podem vir recortados ao que as linhas do lote envolvem; `microfrontends.json` vem sempre inteiro, para você comparar cada MFE com o resto do sistema.
+
+### Formato da resposta
+
+O mesmo CSV recebido, com as mesmas linhas e na mesma ordem, preenchendo só as duas últimas colunas:
+
+- `julgamento (Sim/Não/Não sei)`: `Sim` (concordo que é o anti-padrão), `Não` ou `Não sei`
+- `justificativa (se Não ou Não sei)`: 1 a 2 frases citando os fatos usados; vazia quando for `Sim`
+
+Não altere as outras colunas: o `#` identifica a detecção.
+
+
+## Exemplos (few-shot)
+
+
+**Exemplo 1 — Nano Frontend, sim**
+
+Contexto: plataforma de edição de diagramas dividida em mfe-header (menu e ações do documento), mfe-objects (formas), mfe-drawer (canvas), mfe-style (estilo) e mfe-footer (abas de navegação). Todos são do mesmo domínio e trabalham em coordenação estreita.
+Linha: `1,nano-frontend,mfe-style,`
+
+```csv
+1,nano-frontend,mfe-style,,Sim,
+```
+
+**Exemplo 2 — Nano Frontend, não**
+
+Contexto: a mesma plataforma, com um único mfe-diagram responsável por toda a experiência de edição, reutilizando componentes internos para as variações.
+Linha: `2,nano-frontend,mfe-diagram,`
+
+```csv
+2,nano-frontend,mfe-diagram,,Não,"É uma unidade alinhada a um domínio inteiro (a edição de diagramas), não uma parte da interface separada como se fosse componente."
+```
+
+**Exemplo 3 — Hammering APIs, sim**
+
+Contexto: e-commerce em que mfe-list e mfe-recommendations chamam, cada um por conta própria, a mesma API de detalhes do produto para obter preço e disponibilidade dos mesmos itens, a cada visita à página do produto.
+Linha: `3,hammering-apis,"mfe-list, mfe-recommendations",/products/{id}`
+
+```csv
+3,hammering-apis,"mfe-list, mfe-recommendations",/products/{id},Sim,
+```
+
+**Exemplo 4 — Hammering APIs, não**
+
+Contexto: o mesmo e-commerce, em que um contêiner pai faz uma única chamada a /products/{id} e repassa os dados aos MFEs filhos; cada MFE só chama rotas do próprio domínio.
+Linha: `4,hammering-apis,mfe-container,/products/{id}`
+
+```csv
+4,hammering-apis,mfe-container,/products/{id},Não,"A chamada é feita uma vez, por quem distribui os dados; os MFEs não a repetem de forma independente."
+```
+
+**Exemplo 5 — Global State Communication, sim**
+
+Contexto: plataforma financeira em que mfe-account guarda o saldo num estado global compartilhado, lido diretamente pelos outros MFEs. Ao incluir a moeda na estrutura do saldo, a lógica dos MFEs que liam o estado quebra.
+Linha: `5,global-state-communication,"mfe-account, mfe-payments, mfe-dashboard",`
+
+```csv
+5,global-state-communication,"mfe-account, mfe-payments, mfe-dashboard",,Sim,
+```
+
+**Exemplo 6 — Global State Communication, não**
+
+Contexto: a mesma plataforma, em que cada MFE tem estado local e os outros recebem o saldo por eventos publicados por mfe-account, com interface versionada.
+Linha: `6,global-state-communication,"mfe-account, mfe-payments, mfe-dashboard",`
+
+```csv
+6,global-state-communication,"mfe-account, mfe-payments, mfe-dashboard",,Não,"Não há estado compartilhado acessado diretamente; a informação circula por eventos com contrato definido."
+```
+
+**Exemplo 7 — Mega Frontend, sim**
+
+Contexto: e-commerce dividido em só dois MFEs: mfe-users (usuários) e mfe-shopping, que tem as telas de listagem de produtos, detalhe do produto, confirmação de compra e histórico de compras.
+Linha: `7,mega-frontend,mfe-shopping,`
+
+```csv
+7,mega-frontend,mfe-shopping,,Sim,
+```
+
+**Exemplo 8 — Mega Frontend, não**
+
+Contexto: o mesmo e-commerce, com mfe-products (listagem e detalhe, domínio de produto) e mfe-purchases (confirmação e histórico, domínio de compra).
+Linha: `8,mega-frontend,mfe-products,`
+
+```csv
+8,mega-frontend,mfe-products,,Não,"Reúne só telas do domínio de produto; as responsabilidades de compra estão em outro MFE."
+```
+
+**Exemplo 9 — One Micro Frontend for All, sim**
+
+Contexto: aplicação bancária em que mfe-accounts, mfe-cards e mfe-loans precisam de uma interface de transação, e os três importam diretamente um mesmo mfe-transactions, fortemente acoplado a eles.
+Linha: `9,one-for-all,mfe-transactions,`
+
+```csv
+9,one-for-all,mfe-transactions,,Sim,
+```
+
+**Exemplo 10 — One Micro Frontend for All, não**
+
+Contexto: a mesma aplicação, em que o mfe-transactions é uma caixa-preta: os MFEs disparam um evento openTransaction, ele se renderiza sozinho e devolve o resultado num evento transactionFinished, sem ser importado por ninguém.
+Linha: `10,one-for-all,mfe-transactions,`
+
+```csv
+10,one-for-all,mfe-transactions,,Não,"Os outros MFEs não o importam; a interação é por eventos com entrada e saída definidas, preservando a independência."
+```
+
+**Exemplo 11 — Cyclic Dependency, sim**
+
+Contexto: a tela de detalhe do produto, de mfe-products, integra fragmentos de mfe-checkout (carrinho), mfe-recommender (recomendações) e mfe-delivery (frete). Ao adicionar uma recomendação ao carrinho, mfe-recommender avisa mfe-checkout, que avisa mfe-delivery; quando o endereço muda, mfe-delivery avisa todos os outros para revalidarem seus produtos.
+Linha: `11,cyclic-dependency,"mfe-recommender, mfe-checkout, mfe-delivery",`
+
+```csv
+11,cyclic-dependency,"mfe-recommender, mfe-checkout, mfe-delivery",,Sim,
+```
+
+**Exemplo 12 — Cyclic Dependency, não**
+
+Contexto: a mesma tela, em que cada fragmento publica eventos num Event Store e só é notificado dos eventos que assina; nenhum MFE chama ou avisa outro diretamente.
+Linha: `12,cyclic-dependency,"mfe-recommender, mfe-checkout, mfe-delivery",`
+
+```csv
+12,cyclic-dependency,"mfe-recommender, mfe-checkout, mfe-delivery",,Não,"Os MFEs não dependem uns dos outros; dependem de eventos centralizados, e nenhum precisa conhecer o outro."
+```
+
+**Exemplo 13 — Hub-like Dependency, sim**
+
+Contexto: banco digital em que a tela principal, de um MFE, integra fragmentos de vários outros: lista de investimentos, gráfico do bitcoin, saldo da conta e fatura do cartão. Um erro em qualquer fragmento derruba a tela inteira.
+Linha: `13,hub-like-dependency,mfe-home,`
+
+```csv
+13,hub-like-dependency,mfe-home,,Sim,
+```
+
+**Exemplo 14 — Hub-like Dependency, não**
+
+Contexto: a mesma tela, em que cada fragmento trata os próprios erros e mostra uma mensagem de fallback quando indisponível, sem propagar o erro para a tela.
+Linha: `14,hub-like-dependency,mfe-home,`
+
+```csv
+14,hub-like-dependency,mfe-home,,Não,"Os fragmentos degradam sozinhos; a falha de um não afeta a tela nem os outros, que é a consequência que a definição aponta."
+```
+
+# USER
+
+Sistema: nabstore
+
+microfrontends.json:
+[{"id": "root-config", "directory": "root-config", "entrypoint": "root-config/src/nabstore-root-config.js", "routes": [], "role": "shell", "mounts": ["@nabstore/mfe-checkout", "@nabstore/mfe-products", "@nabstore/mfe-users", "@nabstore/monolito"], "fragments": [], "screens": [], "size": {"files": 15, "lines": 645, "code_lines": 569}, "metadata": {}}, {"id": "@nabstore/mfe-checkout", "directory": "mfe-checkout", "entrypoint": "mfe-checkout/src/nabstore-mfe-checkout.js", "routes": ["/checkout"], "role": "microfrontend", "mounts": [], "fragments": [{"name": "DeliveryEstimateFragment", "microfrontend": "@nabstore/mfe-checkout", "file": "mfe-checkout/src/fragments/DeliveryEstimateFragment/index.js", "line": 22}, {"name": "LastPurchasesFragment", "microfrontend": "@nabstore/mfe-checkout", "file": "mfe-checkout/src/fragments/LastPurchasesFragment/index.js", "line": 22}], "screens": [{"component": "Cart", "microfrontend": "@nabstore/mfe-checkout", "route": "/checkout/cart", "route_expression": "checkoutRoutes.CART", "file": "mfe-checkout/src/screens/Cart/index.js", "line": 22, "reachable": true}, {"component": "Cartoes", "microfrontend": "@nabstore/mfe-checkout", "route": "/checkout/cards", "route_expression": "checkoutRoutes.CARDS", "file": "mfe-checkout/src/screens/Cartoes/index.js", "line": 33, "reachable": true}, {"component": "Compras", "microfrontend": "@nabstore/mfe-checkout", "route": "/checkout/purchases", "route_expression": "checkoutRoutes.COMPRAS", "file": "mfe-checkout/src/screens/Compras/index.js", "line": 38, "reachable": true}, {"component": "Compra", "microfrontend": "@nabstore/mfe-checkout", "route": "/checkout/purchases/:id", "route_expression": "checkoutRoutes.COMPRA", "file": "mfe-checkout/src/screens/Compra/index.js", "line": 39, "reachable": true}, {"component": "Checkout", "microfrontend": "@nabstore/mfe-checkout", "route": "/checkout/confirm", "route_expression": "checkoutRoutes.CHECKOUT", "file": "mfe-checkout/src/screens/Checkout/index.js", "line": 40, "reachable": true}], "size": {"files": 33, "lines": 1760, "code_lines": 1567}, "metadata": {"lifecycles": ["bootstrap", "mount", "unmount"], "custom_props": {"addProductToCartAction": "", "cleanCartAction": "", "removeProductFromCartAction": "", "selectCartAction": "", "store": ""}}}, {"id": "@nabstore/mfe-products", "directory": "mfe-products", "entrypoint": "mfe-products/src/nabstore-mfe-products.js", "routes": ["/products"], "role": "microfrontend", "mounts": [], "fragments": [{"name": "BestOffersFragment", "microfrontend": "@nabstore/mfe-products", "file": "mfe-products/src/fragments/BestOffersFragment/index.js", "line": 22}, {"name": "ProductImageFragment", "microfrontend": "@nabstore/mfe-products", "file": "mfe-products/src/fragments/ProductImagemFragment/index.js", "line": 22}], "screens": [{"component": "Produtos", "microfrontend": "@nabstore/mfe-products", "route": "/products", "route_expression": "productsRoutes.PRODUTOS", "file": "mfe-products/src/screens/Produtos/index.js", "line": 13, "reachable": true}, {"component": "Produto", "microfrontend": "@nabstore/mfe-products", "route": "/products/:id", "route_expression": "productsRoutes.PRODUTO", "file": "mfe-products/src/screens/Produto/index.js", "line": 14, "reachable": true}], "size": {"files": 21, "lines": 1239, "code_lines": 1110}, "metadata": {"lifecycles": ["bootstrap", "mount", "unmount"], "custom_props": {"addProductToCartAction": "", "store": ""}}}, {"id": "@nabstore/mfe-users", "directory": "mfe-users", "entrypoint": "mfe-users/src/nabstore-mfe-users.js", "routes": ["/users"], "role": "microfrontend", "mounts": [], "fragments": [], "screens": [{"component": "Login", "microfrontend": "@nabstore/mfe-users", "route": "/users/login", "route_expression": "usersRoutes.LOGIN", "file": "mfe-users/src/screens/Login/index.js", "line": 15, "reachable": true}, {"component": "Signup", "microfrontend": "@nabstore/mfe-users", "route": "/users/signup", "route_expression": "usersRoutes.SIGNUP", "file": "mfe-users/src/screens/Signup/index.js", "line": 20, "reachable": true}, {"component": "CreateColaborador", "microfrontend": "@nabstore/mfe-users", "route": "/users/create-colaborador", "route_expression": "usersRoutes.CREATE_COLABORADOR", "file": "mfe-users/src/screens/CreateColaborador/index.js", "line": 21, "reachable": true}, {"component": "Enderecos", "microfrontend": "@nabstore/mfe-users", "route": "/users/enderecos", "route_expression": "usersRoutes.ENDERECOS", "file": "mfe-users/src/screens/Enderecos/index.js", "line": 26, "reachable": true}], "size": {"files": 19, "lines": 1080, "code_lines": 962}, "metadata": {"lifecycles": ["bootstrap", "mount", "unmount"], "custom_props": {"loginAction": "", "selectEnderecoAction": "", "store": ""}}}, {"id": "@nabstore/monolito", "directory": "root-config", "entrypoint": "root-config/src/nabstore-monolito.js", "routes": ["/"], "role": "microfrontend", "mounts": [], "fragments": [], "screens": [{"component": "Sobre", "microfrontend": "@nabstore/monolito", "route": "/", "route_expression": "monolitoRoutes.ABOUT", "file": "root-config/src/screens/index.js", "line": 44, "reachable": true}], "size": {"files": 15, "lines": 645, "code_lines": 569}, "metadata": {"lifecycles": ["bootstrap", "mount", "unmount"]}}]
+
+compositions.json:
+[{"consumer": "@nabstore/mfe-checkout", "provider": "@nabstore/mfe-products", "fragment": "BestOffersFragment", "local_name": "BestOffersFragment", "imported_at": {"file": "mfe-checkout/src/screens/Cart/index.js", "line": 7, "code": "import { BestOffersFragment } from \"@nabstore/mfe-products\";"}, "renders": [{"file": "mfe-checkout/src/screens/Cart/index.js", "line": 90, "props": ["addProductToCart", "cart"], "screens": ["@nabstore/mfe-checkout#Cart"], "fragments": []}]}, {"consumer": "@nabstore/mfe-checkout", "provider": "@nabstore/mfe-products", "fragment": "ProductImageFragment", "local_name": "ProductImageFragment", "imported_at": {"file": "mfe-checkout/src/components/CartProduct/index.js", "line": 3, "code": "import { ProductImageFragment } from \"@nabstore/mfe-products\";"}, "renders": [{"file": "mfe-checkout/src/components/CartProduct/index.js", "line": 20, "props": ["produtoId", "onError", "className", "alt", "width"], "screens": ["@nabstore/mfe-checkout#Cart"], "fragments": []}]}, {"consumer": "@nabstore/mfe-products", "provider": "@nabstore/mfe-checkout", "fragment": "DeliveryEstimateFragment", "local_name": "DeliveryEstimateFragment", "imported_at": {"file": "mfe-products/src/screens/Produto/index.js", "line": 6, "code": "import { DeliveryEstimateFragment } from \"@nabstore/mfe-checkout\";"}, "renders": [{"file": "mfe-products/src/screens/Produto/index.js", "line": 248, "props": [], "screens": ["@nabstore/mfe-products#Produto"], "fragments": []}]}, {"consumer": "@nabstore/mfe-products", "provider": "@nabstore/mfe-checkout", "fragment": "LastPurchasesFragment", "local_name": "LastPurchasesFragment", "imported_at": {"file": "mfe-products/src/screens/Produtos/index.js", "line": 4, "code": "import { LastPurchasesFragment } from \"@nabstore/mfe-checkout\";"}, "renders": [{"file": "mfe-products/src/screens/Produtos/index.js", "line": 24, "props": [], "screens": ["@nabstore/mfe-products#Produtos"], "fragments": []}]}]
+
+navigations.json:
+[{"source": "@nabstore/mfe-checkout", "target": "@nabstore/mfe-products", "expression": "routes.HOME", "resolved_url": "/products", "match": "exact", "at": {"file": "mfe-checkout/src/screens/Cart/index.js", "line": 45, "code": "path={routes.HOME}"}, "on": {"screens": ["@nabstore/mfe-checkout#Cart"], "fragments": []}}, {"source": "@nabstore/mfe-checkout", "target": "@nabstore/mfe-products", "expression": "routes.HOME", "resolved_url": "/products", "match": "exact", "at": {"file": "mfe-checkout/src/screens/Checkout/index.js", "line": 40, "code": "navigate(routes.HOME);"}, "on": {"screens": ["@nabstore/mfe-checkout#Checkout"], "fragments": []}}, {"source": "@nabstore/mfe-checkout", "target": "@nabstore/mfe-products", "expression": "routes.HOME", "resolved_url": "/products", "match": "exact", "at": {"file": "mfe-checkout/src/screens/Compras/index.js", "line": 47, "code": "path={routes.HOME}"}, "on": {"screens": ["@nabstore/mfe-checkout#Compras"], "fragments": []}}, {"source": "@nabstore/mfe-checkout", "target": "@nabstore/mfe-users", "expression": "routes.LOGIN", "resolved_url": "/users/login", "match": "exact", "at": {"file": "mfe-checkout/src/screens/Cart/index.js", "line": 35, "code": "navigate(routes.LOGIN);"}, "on": {"screens": ["@nabstore/mfe-checkout#Cart"], "fragments": []}}, {"source": "@nabstore/mfe-checkout", "target": "@nabstore/mfe-users", "expression": "routes.ENDERECOS", "resolved_url": "/users/enderecos", "match": "exact", "at": {"file": "mfe-checkout/src/screens/Cartoes/index.js", "line": 20, "code": "navigate(routes.ENDERECOS);"}, "on": {"screens": ["@nabstore/mfe-checkout#Cartoes"], "fragments": []}}, {"source": "@nabstore/mfe-checkout", "target": "@nabstore/mfe-users", "expression": "routes.ENDERECOS", "resolved_url": "/users/enderecos", "match": "exact", "at": {"file": "mfe-checkout/src/screens/Checkout/index.js", "line": 92, "code": "path={routes.ENDERECOS}"}, "on": {"screens": ["@nabstore/mfe-checkout#Checkout"], "fragments": []}}, {"source": "@nabstore/mfe-users", "target": "@nabstore/mfe-checkout", "expression": "routes.CHECKOUT", "resolved_url": "/checkout/confirm", "match": "exact", "at": {"file": "mfe-users/src/screens/Enderecos/index.js", "line": 21, "code": "navigate(routes.CHECKOUT);"}, "on": {"screens": ["@nabstore/mfe-users#Enderecos"], "fragments": []}}, {"source": "@nabstore/mfe-users", "target": "@nabstore/mfe-checkout", "expression": "routes.CARDS", "resolved_url": "/checkout/cards", "match": "exact", "at": {"file": "mfe-users/src/screens/Enderecos/index.js", "line": 27, "code": "path={routes.CARDS}"}, "on": {"screens": ["@nabstore/mfe-users#Enderecos"], "fragments": []}}, {"source": "@nabstore/mfe-users", "target": "@nabstore/mfe-checkout", "expression": "routes.CARDS", "resolved_url": "/checkout/cards", "match": "exact", "at": {"file": "mfe-users/src/screens/Enderecos/index.js", "line": 86, "code": "path={routes.CARDS}"}, "on": {"screens": ["@nabstore/mfe-users#Enderecos"], "fragments": []}}, {"source": "@nabstore/mfe-users", "target": "@nabstore/mfe-products", "expression": "routes.HOME", "resolved_url": "/products", "match": "exact", "at": {"file": "mfe-users/src/hooks/useCreateUser/index.js", "line": 28, "code": "navigate(routes.HOME);"}, "on": {"screens": ["@nabstore/mfe-users#CreateColaborador", "@nabstore/mfe-users#Signup"], "fragments": []}}, {"source": "@nabstore/mfe-users", "target": "@nabstore/mfe-products", "expression": "routes.HOME", "resolved_url": "/products", "match": "exact", "at": {"file": "mfe-users/src/hooks/useLogin/index.js", "line": 25, "code": "navigate(routes.HOME);"}, "on": {"screens": ["@nabstore/mfe-users#Login"], "fragments": []}}, {"source": "@nabstore/monolito", "target": "@nabstore/mfe-checkout", "expression": "routes.CART", "resolved_url": "/checkout/cart", "match": "exact", "at": {"file": "root-config/src/components/Header/index.js", "line": 58, "code": "to={routes.CART}"}, "on": {"screens": [], "fragments": []}}, {"source": "@nabstore/monolito", "target": "@nabstore/mfe-products", "expression": "routes.HOME", "resolved_url": "/products", "match": "exact", "at": {"file": "root-config/src/components/Header/index.js", "line": 22, "code": "navigate(routes.HOME);"}, "on": {"screens": [], "fragments": []}}, {"source": "@nabstore/monolito", "target": "@nabstore/mfe-products", "expression": "routes.HOME", "resolved_url": "/products", "match": "exact", "at": {"file": "root-config/src/components/Header/index.js", "line": 35, "code": "to={routes.HOME}"}, "on": {"screens": [], "fragments": []}}, {"source": "@nabstore/monolito", "target": "@nabstore/mfe-products", "expression": "routes.HOME", "resolved_url": "/products", "match": "exact", "at": {"file": "root-config/src/screens/Sobre/Sobre.js", "line": 20, "code": "onClick={() => navigate(routes.HOME)}"}, "on": {"screens": [], "fragments": []}}, {"source": "@nabstore/monolito", "target": "@nabstore/mfe-users", "expression": "routes.CREATE_COLABORADOR", "resolved_url": "/users/create-colaborador", "match": "exact", "at": {"file": "root-config/src/components/Header/index.js", "line": 43, "code": "to={routes.CREATE_COLABORADOR}"}, "on": {"screens": [], "fragments": []}}, {"source": "@nabstore/monolito", "target": "@nabstore/mfe-users", "expression": "routes.LOGIN", "resolved_url": "/users/login", "match": "exact", "at": {"file": "root-config/src/components/Header/index.js", "line": 83, "code": "to={routes.LOGIN}"}, "on": {"screens": [], "fragments": []}}, {"source": "@nabstore/monolito", "target": "@nabstore/mfe-users", "expression": "routes.SIGNUP", "resolved_url": "/users/signup", "match": "exact", "at": {"file": "root-config/src/components/Header/index.js", "line": 89, "code": "to={routes.SIGNUP}"}, "on": {"screens": [], "fragments": []}}]
+
+communications.json:
+[{"source": "root-config", "target": "@nabstore/mfe-checkout", "mechanism": "customProps", "channel": "addProductToCartAction", "produced_at": [{"file": "root-config/src/nabstore-root-config.js", "line": 0, "code": "customProps: { addProductToCartAction, cleanCartAction, removeProductFromCartAction, selectCartAction, store }"}], "consumed_at": [], "produced_on": {"screens": [], "fragments": []}, "consumed_on": {"screens": [], "fragments": []}, "directed": true}, {"source": "root-config", "target": "@nabstore/mfe-checkout", "mechanism": "customProps", "channel": "cleanCartAction", "produced_at": [{"file": "root-config/src/nabstore-root-config.js", "line": 0, "code": "customProps: { addProductToCartAction, cleanCartAction, removeProductFromCartAction, selectCartAction, store }"}], "consumed_at": [], "produced_on": {"screens": [], "fragments": []}, "consumed_on": {"screens": [], "fragments": []}, "directed": true}, {"source": "root-config", "target": "@nabstore/mfe-checkout", "mechanism": "customProps", "channel": "removeProductFromCartAction", "produced_at": [{"file": "root-config/src/nabstore-root-config.js", "line": 0, "code": "customProps: { addProductToCartAction, cleanCartAction, removeProductFromCartAction, selectCartAction, store }"}], "consumed_at": [], "produced_on": {"screens": [], "fragments": []}, "consumed_on": {"screens": [], "fragments": []}, "directed": true}, {"source": "root-config", "target": "@nabstore/mfe-checkout", "mechanism": "customProps", "channel": "selectCartAction", "produced_at": [{"file": "root-config/src/nabstore-root-config.js", "line": 0, "code": "customProps: { addProductToCartAction, cleanCartAction, removeProductFromCartAction, selectCartAction, store }"}], "consumed_at": [], "produced_on": {"screens": [], "fragments": []}, "consumed_on": {"screens": [], "fragments": []}, "directed": true}, {"source": "root-config", "target": "@nabstore/mfe-checkout", "mechanism": "customProps", "channel": "store", "produced_at": [{"file": "root-config/src/nabstore-root-config.js", "line": 0, "code": "customProps: { addProductToCartAction, cleanCartAction, removeProductFromCartAction, selectCartAction, store }"}], "consumed_at": [], "produced_on": {"screens": [], "fragments": []}, "consumed_on": {"screens": [], "fragments": []}, "directed": true}, {"source": "root-config", "target": "@nabstore/mfe-products", "mechanism": "customProps", "channel": "addProductToCartAction", "produced_at": [{"file": "root-config/src/nabstore-root-config.js", "line": 0, "code": "customProps: { addProductToCartAction, store }"}], "consumed_at": [], "produced_on": {"screens": [], "fragments": []}, "consumed_on": {"screens": [], "fragments": []}, "directed": true}, {"source": "root-config", "target": "@nabstore/mfe-products", "mechanism": "customProps", "channel": "store", "produced_at": [{"file": "root-config/src/nabstore-root-config.js", "line": 0, "code": "customProps: { addProductToCartAction, store }"}], "consumed_at": [], "produced_on": {"screens": [], "fragments": []}, "consumed_on": {"screens": [], "fragments": []}, "directed": true}, {"source": "root-config", "target": "@nabstore/mfe-users", "mechanism": "customProps", "channel": "loginAction", "produced_at": [{"file": "root-config/src/nabstore-root-config.js", "line": 0, "code": "customProps: { loginAction, selectEnderecoAction, store }"}], "consumed_at": [], "produced_on": {"screens": [], "fragments": []}, "consumed_on": {"screens": [], "fragments": []}, "directed": true}, {"source": "root-config", "target": "@nabstore/mfe-users", "mechanism": "customProps", "channel": "selectEnderecoAction", "produced_at": [{"file": "root-config/src/nabstore-root-config.js", "line": 0, "code": "customProps: { loginAction, selectEnderecoAction, store }"}], "consumed_at": [], "produced_on": {"screens": [], "fragments": []}, "consumed_on": {"screens": [], "fragments": []}, "directed": true}, {"source": "root-config", "target": "@nabstore/mfe-users", "mechanism": "customProps", "channel": "store", "produced_at": [{"file": "root-config/src/nabstore-root-config.js", "line": 0, "code": "customProps: { loginAction, selectEnderecoAction, store }"}], "consumed_at": [], "produced_on": {"screens": [], "fragments": []}, "consumed_on": {"screens": [], "fragments": []}, "directed": true}]
+
+api_calls.json:
+[{"microfrontend": "@nabstore/mfe-checkout", "method": "GET", "path": "/cartao", "match": "exact", "client": "axios", "at": {"file": "mfe-checkout/src/services/api.js", "line": 56, "code": "api.get(`/cartao`)"}, "screens": [], "fragments": []}, {"microfrontend": "@nabstore/mfe-checkout", "method": "POST", "path": "/cartao", "match": "exact", "client": "axios", "at": {"file": "mfe-checkout/src/services/api.js", "line": 17, "code": "api.post( `/cartao`, { number, apelido, validade, cvv, titular, }, { headers: { \"Content-Type\": \"application/json\", }, withCredentials: true, } )"}, "screens": [], "fragments": []}, {"microfrontend": "@nabstore/mfe-checkout", "method": "GET", "path": "/compras", "match": "exact", "client": "axios", "at": {"file": "mfe-checkout/src/services/api.js", "line": 61, "code": "api.get(`/compras`)"}, "screens": [], "fragments": []}, {"microfrontend": "@nabstore/mfe-checkout", "method": "POST", "path": "/compras", "match": "exact", "client": "axios", "at": {"file": "mfe-checkout/src/services/api.js", "line": 37, "code": "api.post( `/compras`, { userId, enderecoId, cartaoId, produtos, }, { headers: { \"Content-Type\": \"application/json\", }, withCredentials: true, } )"}, "screens": [], "fragments": []}, {"microfrontend": "@nabstore/mfe-checkout", "method": "GET", "path": "/compras/{param}", "match": "pattern", "client": "axios", "at": {"file": "mfe-checkout/src/services/api.js", "line": 66, "code": "api.get(`/compras/${id}`)"}, "screens": [], "fragments": []}, {"microfrontend": "@nabstore/mfe-checkout", "method": "GET", "path": "/entregas", "match": "exact", "client": "axios", "at": {"file": "mfe-checkout/src/services/api.js", "line": 71, "code": "api.get(`/entregas?cep=${cep}`)"}, "screens": [], "fragments": []}, {"microfrontend": "@nabstore/mfe-products", "method": "GET", "path": "/produtos", "match": "exact", "client": "axios", "at": {"file": "mfe-products/src/services/api.js", "line": 17, "code": "api.get(`/produtos?page=${page ? page : 1}`)"}, "screens": [], "fragments": []}, {"microfrontend": "@nabstore/mfe-products", "method": "POST", "path": "/produtos", "match": "exact", "client": "axios", "at": {"file": "mfe-products/src/services/api.js", "line": 8, "code": "api.post(`/produtos`, formData, { headers: { \"Content-Type\": \"multipart/form-data\", }, })"}, "screens": [], "fragments": []}, {"microfrontend": "@nabstore/mfe-products", "method": "DELETE", "path": "/produtos/{param}", "match": "pattern", "client": "axios", "at": {"file": "mfe-products/src/services/api.js", "line": 43, "code": "api.delete(`/produtos/${id}`, { headers: { \"Content-Type\": \"application/json\", }, })"}, "screens": [], "fragments": []}, {"microfrontend": "@nabstore/mfe-products", "method": "GET", "path": "/produtos/{param}", "match": "pattern", "client": "axios", "at": {"file": "mfe-products/src/services/api.js", "line": 23, "code": "api.get(`/produtos/${id}`)"}, "screens": [], "fragments": []}, {"microfrontend": "@nabstore/mfe-products", "method": "PUT", "path": "/produtos/{param}", "match": "pattern", "client": "axios", "at": {"file": "mfe-products/src/services/api.js", "line": 33, "code": "api.put(`/produtos/${id}`, { nome, descricao, preco, estoque, })"}, "screens": [], "fragments": []}, {"microfrontend": "@nabstore/mfe-users", "method": "GET", "path": "/enderecos", "match": "exact", "client": "axios", "at": {"file": "mfe-users/src/services/api.js", "line": 51, "code": "api.get(`/enderecos`)"}, "screens": [], "fragments": []}, {"microfrontend": "@nabstore/mfe-users", "method": "POST", "path": "/enderecos", "match": "exact", "client": "axios", "at": {"file": "mfe-users/src/services/api.js", "line": 63, "code": "api.post( `/enderecos`, { logradouro, bairro, numero, cidade, uf, cep, }, { headers: { \"Content-Type\": \"application/json\", }, } )"}, "screens": [], "fragments": []}, {"microfrontend": "@nabstore/mfe-users", "method": "POST", "path": "/login", "match": "exact", "client": "axios", "at": {"file": "mfe-users/src/services/api.js", "line": 12, "code": "api.post( `/login`, { email, senha: password }, { headers: { \"Content-Type\": \"application/json\", }, withCredentials: true, } )"}, "screens": [], "fragments": []}, {"microfrontend": "@nabstore/mfe-users", "method": "GET", "path": "/logout", "match": "exact", "client": "axios", "at": {"file": "mfe-users/src/services/api.js", "line": 27, "code": "api.get(`/logout`)"}, "screens": [], "fragments": []}, {"microfrontend": "@nabstore/mfe-users", "method": "POST", "path": "/usuarios", "match": "exact", "client": "axios", "at": {"file": "mfe-users/src/services/api.js", "line": 33, "code": "api.post( `/usuarios`, { nome, email, senha, tipoUsuarioId, }, { headers: { \"Content-Type\": \"application/json\", }, } )"}, "screens": [], "fragments": []}]
+
+state_accesses.json:
+[{"microfrontend": "@nabstore/mfe-checkout", "library": "redux", "path": "cart", "at": {"file": "mfe-checkout/src/screens/Cart/index.js", "line": 17, "code": "useSelector((state) => ({ cart: state.cart, }))"}, "access": "read"}, {"microfrontend": "@nabstore/mfe-checkout", "library": "redux", "path": "cart", "at": {"file": "mfe-checkout/src/screens/Checkout/index.js", "line": 13, "code": "useSelector((state) => ({ cart: state.cart, user: state.user, }))"}, "access": "read"}, {"microfrontend": "@nabstore/mfe-checkout", "library": "redux", "path": "user", "at": {"file": "mfe-checkout/src/screens/Checkout/index.js", "line": 13, "code": "useSelector((state) => ({ cart: state.cart, user: state.user, }))"}, "access": "read"}, {"microfrontend": "@nabstore/mfe-products", "library": "redux", "path": "cart", "at": {"file": "mfe-products/src/screens/Produto/index.js", "line": 30, "code": "useSelector((state) => ({ user: state.user, cart: state.cart, }))"}, "access": "read"}, {"microfrontend": "@nabstore/mfe-products", "library": "redux", "path": "user", "at": {"file": "mfe-products/src/screens/Produto/index.js", "line": 30, "code": "useSelector((state) => ({ user: state.user, cart: state.cart, }))"}, "access": "read"}, {"microfrontend": "@nabstore/mfe-products", "library": "redux", "path": "user", "at": {"file": "mfe-products/src/screens/Produtos/index.js", "line": 13, "code": "useSelector((state) => state.user)"}, "access": "read"}, {"microfrontend": "@nabstore/mfe-users", "library": "redux", "path": "cart", "at": {"file": "mfe-users/src/hooks/useLogin/index.js", "line": 13, "code": "useSelector((state) => state.cart)"}, "access": "read"}, {"microfrontend": "@nabstore/monolito", "library": "localStorage", "path": "cart", "at": {"file": "root-config/src/redux/slicer/cartSlicer.js", "line": 5, "code": "localStorage.getItem(CART_KEY)"}, "access": "read"}, {"microfrontend": "@nabstore/monolito", "library": "localStorage", "path": "cart", "at": {"file": "root-config/src/redux/slicer/cartSlicer.js", "line": 6, "code": "localStorage.getItem(CART_KEY)"}, "access": "read"}, {"microfrontend": "@nabstore/monolito", "library": "localStorage", "path": "cart", "at": {"file": "root-config/src/redux/slicer/cartSlicer.js", "line": 35, "code": "localStorage.setItem(CART_KEY, JSON.stringify(newCart))"}, "access": "write"}, {"microfrontend": "@nabstore/monolito", "library": "localStorage", "path": "cart", "at": {"file": "root-config/src/redux/slicer/cartSlicer.js", "line": 47, "code": "localStorage.setItem(CART_KEY, JSON.stringify(newCart))"}, "access": "write"}, {"microfrontend": "@nabstore/monolito", "library": "localStorage", "path": "cart", "at": {"file": "root-config/src/redux/slicer/cartSlicer.js", "line": 66, "code": "localStorage.setItem(CART_KEY, JSON.stringify(newState))"}, "access": "write"}, {"microfrontend": "@nabstore/monolito", "library": "localStorage", "path": "cart", "at": {"file": "root-config/src/redux/slicer/cartSlicer.js", "line": 84, "code": "localStorage.setItem(CART_KEY, JSON.stringify(newState))"}, "access": "write"}, {"microfrontend": "@nabstore/monolito", "library": "localStorage", "path": "cart", "at": {"file": "root-config/src/redux/slicer/cartSlicer.js", "line": 89, "code": "localStorage.removeItem(CART_KEY)"}, "access": "write"}, {"microfrontend": "@nabstore/monolito", "library": "localStorage", "path": "user", "at": {"file": "root-config/src/redux/slicer/userSlicer.js", "line": 6, "code": "localStorage.getItem(USER_KEY)"}, "access": "read"}, {"microfrontend": "@nabstore/monolito", "library": "localStorage", "path": "user", "at": {"file": "root-config/src/redux/slicer/userSlicer.js", "line": 7, "code": "localStorage.getItem(USER_KEY)"}, "access": "read"}, {"microfrontend": "@nabstore/monolito", "library": "localStorage", "path": "user", "at": {"file": "root-config/src/redux/slicer/userSlicer.js", "line": 25, "code": "localStorage.setItem(USER_KEY, JSON.stringify(data))"}, "access": "write"}]
+
+Planilha a preencher:
+#,anti-padrão,micro frontends,endpoint,julgamento (Sim/Não/Não sei),justificativa (se Não ou Não sei)
+21,nano-frontend,mfe-users,,,
+22,nano-frontend,monolito,,,
+20,global-state-communication,"mfe-checkout, mfe-products, mfe-users",,,

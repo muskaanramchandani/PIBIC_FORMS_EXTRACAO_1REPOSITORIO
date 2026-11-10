@@ -1,0 +1,313 @@
+[
+  {
+    "anti_pattern": "global-state-communication",
+    "message": "3 micro frontends compartilham 2 fatias do estado global: mfe-checkout, mfe-products, mfe-users",
+    "dimension": "estado global",
+    "explanation": "Mais de um micro frontend acessa a mesma fatia do estado global. O formato desse dado virou interface pública de fato, sem nunca ter sido declarado como tal.",
+    "subjects": [
+      "@nabstore/mfe-checkout",
+      "@nabstore/mfe-products",
+      "@nabstore/mfe-users"
+    ],
+    "locations": [
+      {
+        "file": "mfe-checkout/src/screens/Cart/index.js",
+        "line": 17,
+        "code": "useSelector((state) => ({ cart: state.cart, }))"
+      },
+      {
+        "file": "mfe-checkout/src/screens/Checkout/index.js",
+        "line": 13,
+        "code": "useSelector((state) => ({ cart: state.cart, user: state.user, }))"
+      },
+      {
+        "file": "mfe-products/src/screens/Produto/index.js",
+        "line": 30,
+        "code": "useSelector((state) => ({ user: state.user, cart: state.cart, }))"
+      },
+      {
+        "file": "mfe-products/src/screens/Produtos/index.js",
+        "line": 13,
+        "code": "useSelector((state) => state.user)"
+      },
+      {
+        "file": "mfe-users/src/hooks/useLogin/index.js",
+        "line": 13,
+        "code": "useSelector((state) => state.cart)"
+      }
+    ],
+    "metadata": {
+      "text": {
+        "dimension": {
+          "key": "dimension.global_state",
+          "args": {}
+        },
+        "explanation": {
+          "key": "gsc.explanation",
+          "args": {}
+        },
+        "message": {
+          "key": "gsc.message",
+          "args": {
+            "n": 3,
+            "slices": 2,
+            "names": "mfe-checkout, mfe-products, mfe-users"
+          }
+        },
+        "facts": [
+          {
+            "label": {
+              "key": "fact.slices",
+              "args": {}
+            },
+            "value": 2
+          }
+        ]
+      },
+      "relation": "shared_state",
+      "edges": [
+        [
+          "@nabstore/mfe-checkout",
+          "@nabstore/mfe-products"
+        ],
+        [
+          "@nabstore/mfe-checkout",
+          "@nabstore/mfe-users"
+        ],
+        [
+          "@nabstore/mfe-products",
+          "@nabstore/mfe-checkout"
+        ],
+        [
+          "@nabstore/mfe-products",
+          "@nabstore/mfe-users"
+        ],
+        [
+          "@nabstore/mfe-users",
+          "@nabstore/mfe-checkout"
+        ],
+        [
+          "@nabstore/mfe-users",
+          "@nabstore/mfe-products"
+        ]
+      ],
+      "slices": {
+        "redux:cart": [
+          "@nabstore/mfe-checkout",
+          "@nabstore/mfe-products",
+          "@nabstore/mfe-users"
+        ],
+        "redux:user": [
+          "@nabstore/mfe-checkout",
+          "@nabstore/mfe-products"
+        ]
+      },
+      "libraries": [
+        "localStorage",
+        "redux"
+      ]
+    }
+  },
+  {
+    "anti_pattern": "nano-frontend",
+    "message": "mfe-users tem 4 telas e 0 fragmentos, somando 4, no máximo 5 (piso absoluto), com 962 linhas de código, abaixo da mediana de 1036.",
+    "dimension": "tamanho",
+    "explanation": "Indício, não prova: um micro frontend pequeno é legítimo quando constitui sozinho uma capacidade inteira. O corte relativo é a cerca inferior de Tukey sobre a distribuição do próprio sistema, que não acusa ninguém quando as unidades são homogêneas; e a unidade precisa ter também menos código que a mediana, porque poucas telas com muito código não é unidade pequena.",
+    "subjects": [
+      "@nabstore/mfe-users"
+    ],
+    "locations": [],
+    "metadata": {
+      "text": {
+        "dimension": {
+          "key": "dimension.size",
+          "args": {}
+        },
+        "explanation": {
+          "key": "nano.explanation",
+          "args": {}
+        },
+        "message": {
+          "key": "nano.message",
+          "args": {
+            "name": "mfe-users",
+            "screens": 4,
+            "fragments": 0,
+            "size": 4,
+            "threshold": "5",
+            "criterion": {
+              "key": "nano.criterion.floor",
+              "args": {}
+            },
+            "lines": 962,
+            "median": "1036"
+          }
+        },
+        "facts": [
+          {
+            "label": {
+              "key": "fact.screens",
+              "args": {}
+            },
+            "value": 4
+          },
+          {
+            "label": {
+              "key": "fact.fragments",
+              "args": {}
+            },
+            "value": 0
+          },
+          {
+            "label": {
+              "key": "fact.size",
+              "args": {}
+            },
+            "value": 4
+          },
+          {
+            "label": {
+              "key": "fact.size_limit",
+              "args": {}
+            },
+            "value": {
+              "key": "fact.limit_by",
+              "args": {
+                "value": "5",
+                "criterion": {
+                  "key": "nano.criterion.floor",
+                  "args": {}
+                }
+              }
+            }
+          },
+          {
+            "label": {
+              "key": "fact.code_lines",
+              "args": {}
+            },
+            "value": 962
+          },
+          {
+            "label": {
+              "key": "fact.median_lines",
+              "args": {}
+            },
+            "value": "1036"
+          }
+        ]
+      },
+      "criterio": "piso absoluto",
+      "limiar": 5.0,
+      "telas": 4,
+      "fragmentos": 0,
+      "linhas": 962,
+      "piso": 5,
+      "mediana_telas": 3.0,
+      "mediana_fragmentos": 1.0,
+      "mediana_linhas": 1036.0,
+      "distribuicao": "sem amostra suficiente"
+    }
+  },
+  {
+    "anti_pattern": "nano-frontend",
+    "message": "monolito tem 1 telas e 0 fragmentos, somando 1, no máximo 5 (piso absoluto), com 569 linhas de código, abaixo da mediana de 1036.",
+    "dimension": "tamanho",
+    "explanation": "Indício, não prova: um micro frontend pequeno é legítimo quando constitui sozinho uma capacidade inteira. O corte relativo é a cerca inferior de Tukey sobre a distribuição do próprio sistema, que não acusa ninguém quando as unidades são homogêneas; e a unidade precisa ter também menos código que a mediana, porque poucas telas com muito código não é unidade pequena.",
+    "subjects": [
+      "@nabstore/monolito"
+    ],
+    "locations": [],
+    "metadata": {
+      "text": {
+        "dimension": {
+          "key": "dimension.size",
+          "args": {}
+        },
+        "explanation": {
+          "key": "nano.explanation",
+          "args": {}
+        },
+        "message": {
+          "key": "nano.message",
+          "args": {
+            "name": "monolito",
+            "screens": 1,
+            "fragments": 0,
+            "size": 1,
+            "threshold": "5",
+            "criterion": {
+              "key": "nano.criterion.floor",
+              "args": {}
+            },
+            "lines": 569,
+            "median": "1036"
+          }
+        },
+        "facts": [
+          {
+            "label": {
+              "key": "fact.screens",
+              "args": {}
+            },
+            "value": 1
+          },
+          {
+            "label": {
+              "key": "fact.fragments",
+              "args": {}
+            },
+            "value": 0
+          },
+          {
+            "label": {
+              "key": "fact.size",
+              "args": {}
+            },
+            "value": 1
+          },
+          {
+            "label": {
+              "key": "fact.size_limit",
+              "args": {}
+            },
+            "value": {
+              "key": "fact.limit_by",
+              "args": {
+                "value": "5",
+                "criterion": {
+                  "key": "nano.criterion.floor",
+                  "args": {}
+                }
+              }
+            }
+          },
+          {
+            "label": {
+              "key": "fact.code_lines",
+              "args": {}
+            },
+            "value": 569
+          },
+          {
+            "label": {
+              "key": "fact.median_lines",
+              "args": {}
+            },
+            "value": "1036"
+          }
+        ]
+      },
+      "criterio": "piso absoluto",
+      "limiar": 5.0,
+      "telas": 1,
+      "fragmentos": 0,
+      "linhas": 569,
+      "piso": 5,
+      "mediana_telas": 3.0,
+      "mediana_fragmentos": 1.0,
+      "mediana_linhas": 1036.0,
+      "distribuicao": "sem amostra suficiente"
+    }
+  }
+]

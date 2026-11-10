@@ -1,0 +1,53 @@
+%% Processo de seleção do estudo — estado em 03/10/2026
+%% Coluna central: o que sobrou de cada etapa.
+%% Ramo à direita: o que foi descartado, com o ID do critério.
+%% Tracejado curto: afunilamento para IC2, mais grosseiro que o critério.
+%% Azul = automático (collect_repositories.py) · Laranja = julgamento manual
+flowchart TD
+    A["Busca no GitHub<br/>micro frontend | microfrontend<br/>micro frontends | micro-frontend<br/>janela 2008-01-01 a 2026-09-24<br/>4.753 requisições"]
+    A --> O0(["20.099 repositórios distintos"])
+
+    O0 --> F1["Camada 1 — metadados"]
+    F1 --> O1(["17.415 repositórios"])
+    F1 -.-> X1["descartados 2.684<br/>EC1 (2.553) · EC3 (131)<br/>EC5 não disparou: a busca já exclui fork"]
+
+    O1 --> F2["Camada 2 — termos de ruído"]
+    F2 --> O2(["15.166 repositórios"])
+    F2 -.-> X2["descartados 2.249<br/>EC2/EC3 (1.845) · EC1 (404)"]
+
+    O2 --> F3["Camada 3 — vitalidade<br/>EC6: 20+ commits e 7+ dias entre<br/>criação e último push"]
+    F3 --> O3(["2.130 repositórios"])
+    F3 -.-> X3["descartados 13.036<br/>EC6"]
+
+    O3 --> F4["Camada 4 — massa de código<br/>EC7: 10+ arquivos-fonte"]
+    F4 --> O4(["1.907 repositórios<br/>de 1.714 proprietários<br/>fim da triagem automática"])
+    F4 -.-> X4["descartados 223<br/>EC7"]
+
+    O4 --> F5["Listar todos os repositórios de cada proprietário,<br/>para achar as unidades do mesmo sistema<br/>que a busca não encontrou"]
+    F5 --> O5(["251 organizações<br/>12.801 repositórios listados"])
+    F5 -.-> X5["ignorados 1.463 proprietários<br/>afunilamento para IC2"]
+
+    O5 --> F6["Organizações com 2 ou mais<br/>repositórios aprovados na triagem"]
+    F6 --> O6(["31 organizações candidatas"])
+    F6 -.-> X6["descartadas 220 organizações<br/>afunilamento para IC2"]
+
+    O6 --> F8["Julgamento manual"]
+    F8 --> O8(["14 sistemas incluídos<br/>283 repositórios de micro frontend"])
+    F8 -.-> X7["descartadas 17 organizações<br/>IC2 · EC2 · EC4"]
+
+    O8 --> F9["Classificação da tecnologia de integração"]
+    F9 --> O9(["207 single-spa<br/>58 sem framework (rota)<br/>10 misto · 8 module federation"])
+
+    classDef etapa fill:#e8f0fe,stroke:#4a6fa5,color:#1a2b45
+    classDef saida fill:#f7f9fc,stroke:#2c4a73,color:#14243d,stroke-width:2px
+    classDef fora fill:#f7f2f2,stroke:#a86b6b,color:#4a2020,stroke-dasharray:4 3
+    classDef semid fill:#f7f2f2,stroke:#a86b6b,color:#4a2020,stroke-dasharray:2 4
+    classDef manual fill:#fdf0e3,stroke:#b8762e,color:#4a2d08
+    classDef final fill:#e6f4ea,stroke:#3f7a4f,color:#17351f,stroke-width:2px
+
+    class A,F1,F2,F3,F4,F5,F6 etapa
+    class O0,O1,O2,O3,O4,O5,O6 saida
+    class X1,X2,X3,X4,X7 fora
+    class X5,X6 semid
+    class F8,F9 manual
+    class O8,O9 final

@@ -1,0 +1,676 @@
+[
+  {
+    "anti_pattern": "global-state-communication",
+    "message": "6 micro frontends compartilham 3 fatias do estado global: auth, dashboard, navigation-drawer, root-config, statement, transactions",
+    "dimension": "estado global",
+    "explanation": "Mais de um micro frontend acessa a mesma fatia do estado global. O formato desse dado virou interface pública de fato, sem nunca ter sido declarado como tal.",
+    "subjects": [
+      "@cortex-bank/auth",
+      "@cortex-bank/dashboard",
+      "@cortex-bank/navigation-drawer",
+      "@cortex-bank/root-config",
+      "@cortex-bank/statement",
+      "@cortex-bank/transactions"
+    ],
+    "locations": [
+      {
+        "file": "cortex-bank-auth/src/services/authService.ts",
+        "line": 84,
+        "code": "localStorage.setItem(\"token\", token)"
+      },
+      {
+        "file": "cortex-bank-auth/src/services/authService.ts",
+        "line": 88,
+        "code": "localStorage.setItem(\"userName\", decoded.username)"
+      },
+      {
+        "file": "cortex-bank-auth/src/services/authService.ts",
+        "line": 121,
+        "code": "localStorage.setItem(\"userName\", username)"
+      },
+      {
+        "file": "cortex-bank-dashboard/src/utils/accountIdListener.ts",
+        "line": 12,
+        "code": "localStorage.getItem(\"accountId\")"
+      },
+      {
+        "file": "cortex-bank-dashboard/src/utils/accountIdListener.ts",
+        "line": 20,
+        "code": "localStorage.getItem(\"accountId\")"
+      },
+      {
+        "file": "cortex-bank-dashboard/src/utils/accountStorage.ts",
+        "line": 9,
+        "code": "localStorage.getItem(ACCOUNT_ID_KEY)"
+      },
+      {
+        "file": "cortex-bank-dashboard/src/utils/apiClient.ts",
+        "line": 8,
+        "code": "localStorage.getItem(\"token\")"
+      },
+      {
+        "file": "cortex-bank-dashboard/src/utils/apiClient.ts",
+        "line": 75,
+        "code": "localStorage.removeItem(\"token\")"
+      },
+      {
+        "file": "cortex-bank-navigation-drawer/src/utils/accountStorage.ts",
+        "line": 11,
+        "code": "getLocalStorageItem(STORAGE_KEYS.ACCOUNT_ID)"
+      },
+      {
+        "file": "cortex-bank-navigation-drawer/src/utils/accountStorage.ts",
+        "line": 15,
+        "code": "setLocalStorageItem(STORAGE_KEYS.ACCOUNT_ID, accountId)"
+      },
+      {
+        "file": "cortex-bank-navigation-drawer/src/utils/apiClient.ts",
+        "line": 10,
+        "code": "getLocalStorageItem(STORAGE_KEYS.TOKEN)"
+      },
+      {
+        "file": "cortex-bank-navigation-drawer/src/utils/apiClient.ts",
+        "line": 37,
+        "code": "removeLocalStorageItem(STORAGE_KEYS.TOKEN)"
+      },
+      {
+        "file": "cortex-bank-navigation-drawer/src/root.component.tsx",
+        "line": 107,
+        "code": "getLocalStorageItem(STORAGE_KEYS.USER_NAME)"
+      },
+      {
+        "file": "cortex-bank-root-config/src/utils/auth.ts",
+        "line": 17,
+        "code": "localStorage.getItem(AUTH_TOKEN_KEY)"
+      },
+      {
+        "file": "cortex-bank-statement/src/utils/accountStorage.ts",
+        "line": 16,
+        "code": "localStorage.getItem(ACCOUNT_ID_KEY)"
+      },
+      {
+        "file": "cortex-bank-statement/src/utils/apiClient.ts",
+        "line": 10,
+        "code": "localStorage.getItem(\"token\")"
+      },
+      {
+        "file": "cortex-bank-statement/src/utils/apiClient.ts",
+        "line": 78,
+        "code": "localStorage.removeItem(\"token\")"
+      },
+      {
+        "file": "cortex-bank-transactions/src/utils/accountStorage.ts",
+        "line": 9,
+        "code": "localStorage.getItem(ACCOUNT_ID_KEY)"
+      },
+      {
+        "file": "cortex-bank-transactions/src/components/TransactionDetails.tsx",
+        "line": 72,
+        "code": "localStorage.removeItem(\"token\")"
+      },
+      {
+        "file": "cortex-bank-transactions/src/utils/apiClient.ts",
+        "line": 9,
+        "code": "localStorage.getItem(\"token\")"
+      },
+      {
+        "file": "cortex-bank-transactions/src/utils/apiClient.ts",
+        "line": 77,
+        "code": "localStorage.removeItem(\"token\")"
+      },
+      {
+        "file": "cortex-bank-transactions/src/components/TransactionForm.tsx",
+        "line": 14,
+        "code": "localStorage.getItem(\"userName\")"
+      }
+    ],
+    "metadata": {
+      "text": {
+        "dimension": {
+          "key": "dimension.global_state",
+          "args": {}
+        },
+        "explanation": {
+          "key": "gsc.explanation",
+          "args": {}
+        },
+        "message": {
+          "key": "gsc.message",
+          "args": {
+            "n": 6,
+            "slices": 3,
+            "names": "auth, dashboard, navigation-drawer, root-config, statement, transactions"
+          }
+        },
+        "facts": [
+          {
+            "label": {
+              "key": "fact.slices",
+              "args": {}
+            },
+            "value": 3
+          }
+        ]
+      },
+      "relation": "shared_state",
+      "edges": [
+        [
+          "@cortex-bank/auth",
+          "@cortex-bank/dashboard"
+        ],
+        [
+          "@cortex-bank/auth",
+          "@cortex-bank/navigation-drawer"
+        ],
+        [
+          "@cortex-bank/auth",
+          "@cortex-bank/root-config"
+        ],
+        [
+          "@cortex-bank/auth",
+          "@cortex-bank/statement"
+        ],
+        [
+          "@cortex-bank/auth",
+          "@cortex-bank/transactions"
+        ],
+        [
+          "@cortex-bank/dashboard",
+          "@cortex-bank/auth"
+        ],
+        [
+          "@cortex-bank/dashboard",
+          "@cortex-bank/navigation-drawer"
+        ],
+        [
+          "@cortex-bank/dashboard",
+          "@cortex-bank/root-config"
+        ],
+        [
+          "@cortex-bank/dashboard",
+          "@cortex-bank/statement"
+        ],
+        [
+          "@cortex-bank/dashboard",
+          "@cortex-bank/transactions"
+        ],
+        [
+          "@cortex-bank/navigation-drawer",
+          "@cortex-bank/auth"
+        ],
+        [
+          "@cortex-bank/navigation-drawer",
+          "@cortex-bank/dashboard"
+        ],
+        [
+          "@cortex-bank/navigation-drawer",
+          "@cortex-bank/root-config"
+        ],
+        [
+          "@cortex-bank/navigation-drawer",
+          "@cortex-bank/statement"
+        ],
+        [
+          "@cortex-bank/navigation-drawer",
+          "@cortex-bank/transactions"
+        ],
+        [
+          "@cortex-bank/root-config",
+          "@cortex-bank/auth"
+        ],
+        [
+          "@cortex-bank/root-config",
+          "@cortex-bank/dashboard"
+        ],
+        [
+          "@cortex-bank/root-config",
+          "@cortex-bank/navigation-drawer"
+        ],
+        [
+          "@cortex-bank/root-config",
+          "@cortex-bank/statement"
+        ],
+        [
+          "@cortex-bank/root-config",
+          "@cortex-bank/transactions"
+        ],
+        [
+          "@cortex-bank/statement",
+          "@cortex-bank/auth"
+        ],
+        [
+          "@cortex-bank/statement",
+          "@cortex-bank/dashboard"
+        ],
+        [
+          "@cortex-bank/statement",
+          "@cortex-bank/navigation-drawer"
+        ],
+        [
+          "@cortex-bank/statement",
+          "@cortex-bank/root-config"
+        ],
+        [
+          "@cortex-bank/statement",
+          "@cortex-bank/transactions"
+        ],
+        [
+          "@cortex-bank/transactions",
+          "@cortex-bank/auth"
+        ],
+        [
+          "@cortex-bank/transactions",
+          "@cortex-bank/dashboard"
+        ],
+        [
+          "@cortex-bank/transactions",
+          "@cortex-bank/navigation-drawer"
+        ],
+        [
+          "@cortex-bank/transactions",
+          "@cortex-bank/root-config"
+        ],
+        [
+          "@cortex-bank/transactions",
+          "@cortex-bank/statement"
+        ]
+      ],
+      "slices": {
+        "localStorage:accountId": [
+          "@cortex-bank/dashboard",
+          "@cortex-bank/navigation-drawer",
+          "@cortex-bank/statement",
+          "@cortex-bank/transactions"
+        ],
+        "localStorage:token": [
+          "@cortex-bank/auth",
+          "@cortex-bank/dashboard",
+          "@cortex-bank/navigation-drawer",
+          "@cortex-bank/root-config",
+          "@cortex-bank/statement",
+          "@cortex-bank/transactions"
+        ],
+        "localStorage:userName": [
+          "@cortex-bank/auth",
+          "@cortex-bank/navigation-drawer",
+          "@cortex-bank/transactions"
+        ]
+      },
+      "libraries": [
+        "localStorage"
+      ]
+    }
+  },
+  {
+    "anti_pattern": "hammering-apis",
+    "message": "A rota /account/{param}/statement é chamada por 2 micro frontends: dashboard, statement",
+    "dimension": "backend compartilhado",
+    "explanation": "A mesma rota é consumida por mais de um micro frontend. Uma mudança no contrato do serviço afeta todos eles ao mesmo tempo, sem que nenhum dependa diretamente do outro.",
+    "subjects": [
+      "@cortex-bank/dashboard",
+      "@cortex-bank/statement"
+    ],
+    "locations": [
+      {
+        "file": "cortex-bank-dashboard/src/api/dashboard.api.ts",
+        "line": 9,
+        "code": "fetchApi( `/account/${accountId}/statement?pageSize=1000` )"
+      },
+      {
+        "file": "cortex-bank-statement/src/api/statement.api.ts",
+        "line": 22,
+        "code": "fetchApi(url)"
+      }
+    ],
+    "metadata": {
+      "text": {
+        "dimension": {
+          "key": "dimension.shared_backend",
+          "args": {}
+        },
+        "explanation": {
+          "key": "hammering.explanation",
+          "args": {}
+        },
+        "message": {
+          "key": "hammering.message",
+          "args": {
+            "path": "/account/{param}/statement",
+            "n": 2,
+            "names": "dashboard, statement"
+          }
+        },
+        "facts": [
+          {
+            "label": {
+              "key": "fact.route",
+              "args": {}
+            },
+            "value": "/account/{param}/statement"
+          },
+          {
+            "label": {
+              "key": "fact.callers",
+              "args": {}
+            },
+            "value": "dashboard, statement"
+          }
+        ]
+      },
+      "relation": "shared_endpoint",
+      "edges": [
+        [
+          "@cortex-bank/dashboard",
+          "@cortex-bank/statement"
+        ],
+        [
+          "@cortex-bank/statement",
+          "@cortex-bank/dashboard"
+        ]
+      ],
+      "path": "/account/{param}/statement",
+      "methods": [
+        "GET"
+      ],
+      "callers": [
+        "@cortex-bank/dashboard",
+        "@cortex-bank/statement"
+      ]
+    }
+  },
+  {
+    "anti_pattern": "nano-frontend",
+    "message": "auth tem 1 telas e 0 fragmentos, somando 1, no máximo 5 (piso absoluto), com 995 linhas de código, abaixo da mediana de 1389.",
+    "dimension": "tamanho",
+    "explanation": "Indício, não prova: um micro frontend pequeno é legítimo quando constitui sozinho uma capacidade inteira. O corte relativo é a cerca inferior de Tukey sobre a distribuição do próprio sistema, que não acusa ninguém quando as unidades são homogêneas; e a unidade precisa ter também menos código que a mediana, porque poucas telas com muito código não é unidade pequena.",
+    "subjects": [
+      "@cortex-bank/auth"
+    ],
+    "locations": [],
+    "metadata": {
+      "text": {
+        "dimension": {
+          "key": "dimension.size",
+          "args": {}
+        },
+        "explanation": {
+          "key": "nano.explanation",
+          "args": {}
+        },
+        "message": {
+          "key": "nano.message",
+          "args": {
+            "name": "auth",
+            "screens": 1,
+            "fragments": 0,
+            "size": 1,
+            "threshold": "5",
+            "criterion": {
+              "key": "nano.criterion.floor",
+              "args": {}
+            },
+            "lines": 995,
+            "median": "1389"
+          }
+        },
+        "facts": [
+          {
+            "label": {
+              "key": "fact.screens",
+              "args": {}
+            },
+            "value": 1
+          },
+          {
+            "label": {
+              "key": "fact.fragments",
+              "args": {}
+            },
+            "value": 0
+          },
+          {
+            "label": {
+              "key": "fact.size",
+              "args": {}
+            },
+            "value": 1
+          },
+          {
+            "label": {
+              "key": "fact.size_limit",
+              "args": {}
+            },
+            "value": {
+              "key": "fact.limit_by",
+              "args": {
+                "value": "5",
+                "criterion": {
+                  "key": "nano.criterion.floor",
+                  "args": {}
+                }
+              }
+            }
+          },
+          {
+            "label": {
+              "key": "fact.code_lines",
+              "args": {}
+            },
+            "value": 995
+          },
+          {
+            "label": {
+              "key": "fact.median_lines",
+              "args": {}
+            },
+            "value": "1389"
+          }
+        ]
+      },
+      "criterio": "piso absoluto",
+      "limiar": 5.0,
+      "telas": 1,
+      "fragmentos": 0,
+      "linhas": 995,
+      "piso": 5,
+      "mediana_telas": 1,
+      "mediana_fragmentos": 0,
+      "mediana_linhas": 1389,
+      "distribuicao": "sem amostra suficiente"
+    }
+  },
+  {
+    "anti_pattern": "nano-frontend",
+    "message": "navigation-drawer tem 1 telas e 0 fragmentos, somando 1, no máximo 5 (piso absoluto), com 968 linhas de código, abaixo da mediana de 1389.",
+    "dimension": "tamanho",
+    "explanation": "Indício, não prova: um micro frontend pequeno é legítimo quando constitui sozinho uma capacidade inteira. O corte relativo é a cerca inferior de Tukey sobre a distribuição do próprio sistema, que não acusa ninguém quando as unidades são homogêneas; e a unidade precisa ter também menos código que a mediana, porque poucas telas com muito código não é unidade pequena.",
+    "subjects": [
+      "@cortex-bank/navigation-drawer"
+    ],
+    "locations": [],
+    "metadata": {
+      "text": {
+        "dimension": {
+          "key": "dimension.size",
+          "args": {}
+        },
+        "explanation": {
+          "key": "nano.explanation",
+          "args": {}
+        },
+        "message": {
+          "key": "nano.message",
+          "args": {
+            "name": "navigation-drawer",
+            "screens": 1,
+            "fragments": 0,
+            "size": 1,
+            "threshold": "5",
+            "criterion": {
+              "key": "nano.criterion.floor",
+              "args": {}
+            },
+            "lines": 968,
+            "median": "1389"
+          }
+        },
+        "facts": [
+          {
+            "label": {
+              "key": "fact.screens",
+              "args": {}
+            },
+            "value": 1
+          },
+          {
+            "label": {
+              "key": "fact.fragments",
+              "args": {}
+            },
+            "value": 0
+          },
+          {
+            "label": {
+              "key": "fact.size",
+              "args": {}
+            },
+            "value": 1
+          },
+          {
+            "label": {
+              "key": "fact.size_limit",
+              "args": {}
+            },
+            "value": {
+              "key": "fact.limit_by",
+              "args": {
+                "value": "5",
+                "criterion": {
+                  "key": "nano.criterion.floor",
+                  "args": {}
+                }
+              }
+            }
+          },
+          {
+            "label": {
+              "key": "fact.code_lines",
+              "args": {}
+            },
+            "value": 968
+          },
+          {
+            "label": {
+              "key": "fact.median_lines",
+              "args": {}
+            },
+            "value": "1389"
+          }
+        ]
+      },
+      "criterio": "piso absoluto",
+      "limiar": 5.0,
+      "telas": 1,
+      "fragmentos": 0,
+      "linhas": 968,
+      "piso": 5,
+      "mediana_telas": 1,
+      "mediana_fragmentos": 0,
+      "mediana_linhas": 1389,
+      "distribuicao": "sem amostra suficiente"
+    }
+  },
+  {
+    "anti_pattern": "one-for-all",
+    "message": "navigation-drawer está conectado a 4 dos 4 demais micro frontends: depende de 4 e é dependido por 0.",
+    "dimension": "todas as relações",
+    "explanation": "O micro frontend está ligado a quase todos os demais, somadas as três relações. Deixa de ser uma parte implantável de forma independente.",
+    "subjects": [
+      "@cortex-bank/navigation-drawer",
+      "@cortex-bank/auth",
+      "@cortex-bank/dashboard",
+      "@cortex-bank/statement",
+      "@cortex-bank/transactions"
+    ],
+    "locations": [],
+    "metadata": {
+      "text": {
+        "dimension": {
+          "key": "dimension.all_relations",
+          "args": {}
+        },
+        "explanation": {
+          "key": "ofa.explanation",
+          "args": {}
+        },
+        "message": {
+          "key": "ofa.message",
+          "args": {
+            "name": "navigation-drawer",
+            "neighbours": 4,
+            "others": 4,
+            "out": 4,
+            "incoming": 0
+          }
+        },
+        "facts": [
+          {
+            "label": {
+              "key": "fact.connected",
+              "args": {}
+            },
+            "value": {
+              "key": "fact.of",
+              "args": {
+                "part": 4,
+                "whole": 4
+              }
+            }
+          },
+          {
+            "label": {
+              "key": "fact.depends_on",
+              "args": {}
+            },
+            "value": 4
+          },
+          {
+            "label": {
+              "key": "fact.depended_by",
+              "args": {}
+            },
+            "value": 0
+          }
+        ]
+      },
+      "edges": [
+        [
+          "@cortex-bank/navigation-drawer",
+          "@cortex-bank/auth"
+        ],
+        [
+          "@cortex-bank/navigation-drawer",
+          "@cortex-bank/dashboard"
+        ],
+        [
+          "@cortex-bank/navigation-drawer",
+          "@cortex-bank/statement"
+        ],
+        [
+          "@cortex-bank/navigation-drawer",
+          "@cortex-bank/transactions"
+        ]
+      ],
+      "neighbours": 4,
+      "others": 4,
+      "coverage": 1.0,
+      "depends_on": [
+        "@cortex-bank/auth",
+        "@cortex-bank/dashboard",
+        "@cortex-bank/statement",
+        "@cortex-bank/transactions"
+      ],
+      "depended_on_by": []
+    }
+  }
+]

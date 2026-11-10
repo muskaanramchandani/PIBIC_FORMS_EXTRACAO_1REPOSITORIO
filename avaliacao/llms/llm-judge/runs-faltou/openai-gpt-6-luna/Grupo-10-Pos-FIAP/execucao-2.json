@@ -1,0 +1,64 @@
+{
+ "ok": true,
+ "system": "Grupo-10-Pos-FIAP",
+ "execution": 2,
+ "template_sha256": "36d3b135aa08f2224d5128a572b7923f92fa4ba0dee54bbf96416b1ef5e0801e",
+ "parameters": {
+  "model": "openai/gpt-6-luna",
+  "reasoning": {
+   "effort": "high"
+  },
+  "max_tokens": 16000,
+  "usage": {
+   "include": true
+  }
+ },
+ "system_prompt": "Você é um especialista em arquitetura de micro frontends. Vai receber a arquitetura de um sistema, reconstruída por análise estática do código, e a lista de anti-padrões que uma ferramenta já detectou nele. Sua tarefa é apontar as ocorrências de anti-padrão que **não estão na lista**.\n\nRegras:\n- Julgue pela **definição**, não por regra numérica. Não existe limiar oficial.\n- Use só os fatos fornecidos. Aponte só o que os fatos sustentam.\n- Uma ocorrência é um **problema de arquitetura**, com as consequências que a definição descreve, não só a presença do padrão.\n- Considere os 7 anti-padrões.\n- Não repita o que já está na lista de detectados.\n- Responda só no formato pedido.\n\n### Definições\n\nDo catálogo \"A Catalog of Micro Frontends Anti-patterns\" (ICSE 2025, doi:10.1109/ICSE55347.2025.00079; mfe-anti-patterns.online), literalmente.\n\n**Cyclic Dependency**\n- *Problem:* Two or more MFEs directly or indirectly depend on each other.\n- *Symptoms and consequences:* High coupling between screens and fragments, compromising MFEs' independence and modularity. Thus, changes in one MFE require coordination with the others. Circular dependencies lead to challenges in a system's maintenance and evolution, compromising agility and the ability to scale developments efficiently.\n\n**Hub-like Dependency** (also known as: Tight coupling)\n- *Problem:* A screen of a MFE integrates fragments from several other MFEs, becoming a central point of interdependence.\n- *Symptoms and consequences:* Any issue occurring in the main screen or one of its fragments can affect all other fragments present on it.\n\n**Hammering APIs** (also known as: Let's hammer the APIs)\n- *Problem:* Multiple micro frontends independently call the same API endpoint.\n- *Symptoms and consequences:* Duplicated requests, unnecessary load on backend services, and scalability issues.\n\n**Global State Communication** (also known as: Relax, It's just code; Sharing state across Micro Frontends; Global State; Shared Global State)\n- *Problem:* Using shared states violates the principle of segregation, compromising the independence of each micro frontend and increasing coupling.\n- *Symptoms and consequences:* Changes in the shared state need coordination with every MFE, otherwise you may introduce bugs in the ones reading the state, which decreases independence.\n\n**One Micro Frontend for All**\n- *Problem:* A single micro frontend is created and imported by all other MFEs.\n- *Symptoms and consequences:* Misuse of local storage, pub/sub mechanisms, and web socket mechanisms to implement communication between the MFE for all and others. Having a single point of failure that can break the entire application.\n\n**Mega Frontend**\n- *Problem:* A single micro frontend takes on multiple responsibilities or concerns that should be separated.\n- *Symptoms and consequences:* This often happens when an MFE includes several screens or unrelated fragments, resulting in a bloated unit.\n\n**Nano Frontend** (also known as: Yin and Yang; Micro Frontends vs Components)\n- *Problem:* A micro frontend is created with only a few screens or fragments.\n- *Symptoms and consequences:* This typically occurs when teams confuse micro frontends with UI components, resulting in fragmented and ineffective architectural decomposition.\n\n### Artefatos\n\n| bloco | um registro é… |\n|---|---|\n| `microfrontends` | um micro frontend: `id`; `role` (`shell` = o orquestrador que monta os outros, `microfrontend` = os demais); `mounts` (quem o shell monta); `routes` (URL base em que é montado); `screens` (telas: `component`, `route`, `reachable` = se está ligada ao app); `fragments` (componentes que expõe para outros montarem); `size` (`files`, `lines`, `code_lines`) |\n| `compositions` | um MFE montando o fragmento de outro: `consumer` monta o `fragment` de `provider`; `renders` = onde é renderizado e em quais `screens` |\n| `navigations` | um MFE levando o usuário para outro: `source` → `target`, pela URL `resolved_url`; `on` = de quais telas parte |\n| `communications` | uma mensagem entre MFEs: `source` publica, `target` recebe, pelo `channel`, com o `mechanism` (`CustomEvent`, `customProps`…) |\n| `api_calls` | por endpoint (`método caminho`, `{param}` = trecho variável), os MFEs que o chamam |\n| `state_accesses` | por chave de estado global (`biblioteca:chave`), os MFEs que leem (`read`) e os que gravam (`write`) |\n\n### Formato da resposta\n\nUma linha JSON por ocorrência que falta na lista:\n\n```json\n{\"anti_padrao\": \"<um dos 7, como na lista>\", \"micro_frontends\": [\"...\"], \"endpoint\": \"<só para hammering-apis>\", \"justificativa\": \"1 a 2 frases citando os fatos usados\"}\n```\n\nOs nomes dos anti-padrões: `cyclic-dependency`, `hub-like-dependency`, `hammering-apis`, `global-state-communication`, `one-for-all`, `mega-frontend`, `nano-frontend`.\n\nTermine sempre com a linha `{\"fim\": true}`, mesmo que não falte nada.",
+ "user": "Sistema: Grupo-10-Pos-FIAP\n\nDetectados pela ferramenta:\n- global-state-communication | cortex-bank-auth, cortex-bank-dashboard, cortex-bank-navigation-drawer, cortex-bank-root-config, cortex-bank-statement, cortex-bank-transactions | \n- hammering-apis | cortex-bank-dashboard, cortex-bank-statement | /account/{param}/statement\n- nano-frontend | cortex-bank-auth | \n- nano-frontend | cortex-bank-navigation-drawer | \n- one-for-all | cortex-bank-navigation-drawer, cortex-bank-auth, cortex-bank-dashboard, cortex-bank-statement, cortex-bank-transactions | \n\nmicrofrontends: [{\"id\": \"cortex-bank-root-config\", \"role\": \"shell\", \"routes\": [], \"mounts\": [\"cortex-bank-auth\", \"cortex-bank-dashboard\", \"cortex-bank-navigation-drawer\", \"cortex-bank-statement\", \"cortex-bank-transactions\"], \"screens\": [], \"fragments\": [], \"size\": {\"files\": 7, \"lines\": 347, \"code_lines\": 229}}, {\"id\": \"cortex-bank-auth\", \"role\": \"microfrontend\", \"routes\": [\"/auth\"], \"mounts\": [], \"screens\": [{\"component\": \"Login\", \"route\": \"/auth\", \"reachable\": true}], \"fragments\": [], \"size\": {\"files\": 20, \"lines\": 1134, \"code_lines\": 995}}, {\"id\": \"cortex-bank-dashboard\", \"role\": \"microfrontend\", \"routes\": [\"/\", \"/dashboard\"], \"mounts\": [], \"screens\": [{\"component\": \"root.component\", \"route\": \"/\", \"reachable\": true}], \"fragments\": [], \"size\": {\"files\": 25, \"lines\": 1562, \"code_lines\": 1389}}, {\"id\": \"cortex-bank-navigation-drawer\", \"role\": \"microfrontend\", \"routes\": [\"/\", \"/dashboard\", \"/statement\", \"/transactions\"], \"mounts\": [], \"screens\": [{\"component\": \"root.component\", \"route\": \"/\", \"reachable\": true}], \"fragments\": [], \"size\": {\"files\": 20, \"lines\": 1086, \"code_lines\": 968}}, {\"id\": \"cortex-bank-statement\", \"role\": \"microfrontend\", \"routes\": [\"/statement\"], \"mounts\": [], \"screens\": [{\"component\": \"root.component\", \"route\": \"/statement\", \"reachable\": true}], \"fragments\": [], \"size\": {\"files\": 51, \"lines\": 4550, \"code_lines\": 3924}}, {\"id\": \"cortex-bank-transactions\", \"role\": \"microfrontend\", \"routes\": [\"/transactions\"], \"mounts\": [], \"screens\": [{\"component\": \"root.component\", \"route\": \"/transactions\", \"reachable\": true}], \"fragments\": [], \"size\": {\"files\": 28, \"lines\": 2587, \"code_lines\": 2306}}]\n\ncompositions: []\n\nnavigations: [{\"source\": \"cortex-bank-navigation-drawer\", \"target\": \"cortex-bank-auth\", \"resolved_url\": \"/auth\", \"on\": {\"screens\": [\"@cortex-bank/navigation-drawer#root.component\"], \"fragments\": []}}]\n\ncommunications: [{\"source\": \"cortex-bank-navigation-drawer\", \"target\": \"cortex-bank-dashboard\", \"channel\": \"accountIdChanged\", \"mechanism\": \"CustomEvent\"}, {\"source\": \"cortex-bank-navigation-drawer\", \"target\": \"cortex-bank-statement\", \"channel\": \"accountIdChanged\", \"mechanism\": \"CustomEvent\"}, {\"source\": \"cortex-bank-navigation-drawer\", \"target\": \"cortex-bank-transactions\", \"channel\": \"accountIdChanged\", \"mechanism\": \"CustomEvent\"}]\n\napi_calls: {\"GET /account\": [\"cortex-bank-navigation-drawer\"], \"GET /account/transaction\": [\"cortex-bank-transactions\"], \"GET /account/transaction/{param}\": [\"cortex-bank-transactions\"], \"GET /account/{param}/statement\": [\"cortex-bank-dashboard\", \"cortex-bank-statement\"], \"POST /user\": [\"cortex-bank-auth\"], \"POST /user/auth\": [\"cortex-bank-auth\"], \"POST https://api.cloudinary.com/v1_1/{param}/upload\": [\"cortex-bank-transactions\"]}\n\nstate_accesses: {\"localStorage:accountId\": {\"read\": [\"cortex-bank-dashboard\", \"cortex-bank-navigation-drawer\", \"cortex-bank-statement\", \"cortex-bank-transactions\"], \"write\": [\"cortex-bank-navigation-drawer\"]}, \"localStorage:dashboardConfig\": {\"read\": [\"cortex-bank-dashboard\"], \"write\": [\"cortex-bank-dashboard\"]}, \"localStorage:token\": {\"read\": [\"cortex-bank-dashboard\", \"cortex-bank-navigation-drawer\", \"cortex-bank-root-config\", \"cortex-bank-statement\", \"cortex-bank-transactions\"], \"write\": [\"cortex-bank-auth\", \"cortex-bank-dashboard\", \"cortex-bank-navigation-drawer\", \"cortex-bank-statement\", \"cortex-bank-transactions\"]}, \"localStorage:userName\": {\"read\": [\"cortex-bank-navigation-drawer\", \"cortex-bank-transactions\"], \"write\": [\"cortex-bank-auth\"]}}\n",
+ "attempts": [
+  {
+   "started": "2026-10-15T17:15:53.142115+00:00",
+   "id": "gen-1792084553-OHju6S2wBy3ikjDI2xhf",
+   "model": "openai/gpt-6-luna",
+   "provider": "OpenAI",
+   "usage": {
+    "prompt_tokens": 2266,
+    "completion_tokens": 2259,
+    "total_tokens": 4525,
+    "cost": 0.00115243,
+    "is_byok": false,
+    "prompt_tokens_details": {
+     "cached_tokens": 2263,
+     "cache_write_tokens": 0,
+     "audio_tokens": 0,
+     "video_tokens": 0
+    },
+    "cost_details": {
+     "upstream_inference_cost": 0.00115243,
+     "upstream_inference_prompt_cost": 2.293e-05,
+     "upstream_inference_completions_cost": 0.0011295
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 2163,
+     "image_tokens": 0,
+     "audio_tokens": 0
+    }
+   },
+   "content": "{\"anti_padrao\":\"cyclic-dependency\",\"micro_frontends\":[\"cortex-bank-dashboard\",\"cortex-bank-navigation-drawer\",\"cortex-bank-statement\",\"cortex-bank-transactions\"],\"justificativa\":\"Os quatro MFEs leem e gravam `localStorage:token`, criando dependências mútuas e ciclos de dados entre eles. Alterações nesse estado podem exigir coordenação entre esses MFEs.\"}\n{\"fim\":true}",
+   "reasoning": "**Analyzing global shared state**\n\nI'm considering how a global shared state could create dependencies. When localStorage interacts with multiple contributors, implicit dependencies might form. I've detected a global state where micro-frontends could directly or indirectly depend on each other. \n\nIn terms of localStorage, it appears that shared reads and writes could create dependencies, even if there aren’t intrinsic edges. For example, various components like the dashboard and the nav drawer all read and write the token, suggesting a bidirectional dependence that could potentially lead to cycles.",
+   "missing": [
+    {
+     "anti_padrao": "cyclic-dependency",
+     "micro_frontends": [
+      "cortex-bank-dashboard",
+      "cortex-bank-navigation-drawer",
+      "cortex-bank-statement",
+      "cortex-bank-transactions"
+     ],
+     "justificativa": "Os quatro MFEs leem e gravam `localStorage:token`, criando dependências mútuas e ciclos de dados entre eles. Alterações nesse estado podem exigir coordenação entre esses MFEs."
+    }
+   ],
+   "problem": null
+  }
+ ]
+}
