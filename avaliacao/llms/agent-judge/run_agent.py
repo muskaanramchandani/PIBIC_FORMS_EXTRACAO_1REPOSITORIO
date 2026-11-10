@@ -27,7 +27,7 @@ HERE = Path(__file__).parent
 CODE = HERE / "../../../../architectures"
 URL = "https://openrouter.ai/api/v1/chat/completions"
 
-# Só IPv4: em rede com IPv6 quebrado, cada chamada esperava o IPv6 falhar.
+# Só IPv4: em rede com IPv6 quebrado, cada chamada esperava o IPv6 falhar
 _resolve = socket.getaddrinfo
 socket.getaddrinfo = lambda host, port, family=0, *rest: _resolve(host, port, socket.AF_INET, *rest)
 
